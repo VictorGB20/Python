@@ -50,7 +50,7 @@ except Exception as e:
     df = pd.DataFrame()
 
 
-def _get_alumno(codigoId: int):
+def getAlumno(codigoId: int):
     """Devuelve la fila del alumno como Series o lanza HTTPException si no existe."""
     if df.empty:
         raise HTTPException(status_code=503, detail="Datos no cargados (CSV no disponible).")
@@ -73,7 +73,7 @@ def asistencia(codigoId: int | None = Query(None, description="ID del alumno")):
     """Devuelve nombre, apellidos y asistencia de un alumno por su ID."""
     if codigoId is None:
         raise HTTPException(status_code=400, detail="Se requiere el parámetro 'codigoId'. Uso: /asistencia?codigoId=1001")
-    datos = _get_alumno(codigoId)
+    datos = getAlumno(codigoId)
     return {
         "nombre": datos.get('Nombre', 'Desconocido'),
         "apellidos": datos.get('Apellidos', 'Desconocido'),
@@ -86,13 +86,14 @@ def notas(codigoId: int | None = Query(None, description="ID del alumno"), notaC
     """Si `notaConsultada` se proporciona devuelve esa nota; si no, devuelve todas las notas del alumno."""
     if codigoId is None:
         raise HTTPException(status_code=400, detail="Se requiere el parámetro 'codigoId'. Uso: /notas?codigoId=1001")
-    datos = _get_alumno(codigoId)
+    datos = getAlumno(codigoId)
 
     # Columnas que consideramos metadatos, no notas
     meta = {'ID', 'Nombre', 'Apellidos', 'Asistencia'}
     notas_cols = [c for c in df.columns if c not in meta]
 
     if notaConsultada:
+
         if notaConsultada not in df.columns:
             raise HTTPException(status_code=400, detail={
                 "error": f"La categoría '{notaConsultada}' no existe.",
@@ -101,15 +102,17 @@ def notas(codigoId: int | None = Query(None, description="ID del alumno"), notaC
         return {
             "nombre": datos.get('Nombre'),
             "apellidos": datos.get('Apellidos'),
-            "calificacion": {"modulo": notaConsultada, "nota": datos[notaConsultada]}
+            "calificacion": {"modulo": notaConsultada, "nota": datos[notaConsultada]},
         }
 
     # Si no se pasa `notaConsultada`, devolvemos todas las notas disponibles
     todas_notas = {col: datos[col] for col in notas_cols}
+    text = "En caso de querer especificar solo un modulo introduzca el nombre de este. Uso: /notas?codigoId=1001&notaConsultada=Parcial1"
     return {
         "nombre": datos.get('Nombre'),
         "apellidos": datos.get('Apellidos'),
-        "notas": todas_notas
+        "notas": todas_notas,
+        "mensaje": text
     }
     
 
