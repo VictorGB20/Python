@@ -1,0 +1,1 @@
+En este repositorio ire subiendo los ejercicios realizados en la asignatura de Python.
